@@ -3,6 +3,7 @@ var ctx = c.getContext("2d");
 
 var width = 1920
 var height = 1080
+var inner_Width = window.innerWidth;
 
 const fps = 75;
 const animation_speed = 1; //speed 1 = 1 second; speed 2 = 0.5 second
@@ -109,8 +110,8 @@ c.style.position = "fixed"
 class Player {
     constructor() {
         this.size = 192;
-        this.movement_speed = 2;
-        this.moving_speed = 10;
+        this.movement_speed = 10;
+        this.moving_speed = 2;
         this.jump_height = 20;
         this.gravitation_work = true;
         this.foot = [this.size / 6, this.size / 7 * 3];
@@ -184,7 +185,6 @@ class Player {
                     if (this.move != "jump") {
                         this.move = "jump"
                         setTimeout(() => {
-                            ada
                             check_border([this])
                             let i = 0;
                             let jump_interval = setInterval(() => {
@@ -282,11 +282,23 @@ var player = new Player();
 function set_canvas_size() {
     c.width = width
     c.height = height
-    c.style.bottom = "0"
-    let a = -(width - window.innerWidth) / 2
-    let b = -(height - window.innerHeight) / 2
-    c.style.left = a + "px";
-    c.style.bottom = b + "px";
+    if (window.innerWidth - inner_Width != 0) {
+        let left = parseFloat(c.style.left.slice(0, -2));
+        if (left < 0) {
+            c.style.left = left + (window.innerWidth - inner_Width) + "px"
+        } else {
+            c.style.left = 0 + "px"
+        }
+        inner_Width = window.innerWidth
+    }
+    if ((player.x + player.size / 2 >= window.innerWidth / 2 && player.x - width + player.size / 2 <= -window.innerWidth / 2)) {
+        c.style.left = -player.x + window.innerWidth / 2 - player.size / 2 + "px";
+    }
+    if (height / 2 - player.y - player.size < 0) {
+        c.style.bottom = 0 + "px"
+    } else {
+        c.style.bottom = -(height - innerHeight) + "px"
+    }
 }
 
 var keyboard_map = {};
@@ -440,7 +452,6 @@ function check_block_colision(for_what) {
 
     }
 }
-
 
 setInterval(() => {
     set_canvas_size();
