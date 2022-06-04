@@ -184,13 +184,19 @@ class Player {
                     if (this.move != "jump") {
                         this.move = "jump"
                         setTimeout(() => {
+                            ada
                             check_border([this])
                             let i = 0;
                             let jump_interval = setInterval(() => {
+                                let solid = blocks[map[Math.floor((this.y + this.size + 1) / (height / 14))][Math.floor((this.x + this.foot[0] + 15) / (width / 24))]]["solid"];
                                 if (i > 10 && i < 30) this.y -= this.jump_height / 20;
-                                if (i > 30 && i < 40) this.y += this.jump_height / 10;
-                                if (i >= 50) clearInterval(jump_interval);
-                                i++
+                                if (i > 30 && i < 40 && !solid) {
+                                    this.y += this.jump_height / 10;
+                                }
+                                if (i >= 50) {
+                                    clearInterval(jump_interval);
+                                    i = 0;
+                                } else i++
                             }, 10)
                         }, 0)
                     }
@@ -216,7 +222,7 @@ class Player {
 
                 if (keyboard_map["Space"] && !this.falling) {
                     this.animation = "jump";
-                    this_moves["animation_six"] = 0;
+                    player_moves["animation_six"] = 0;
                 }
                 if (keyboard_map["0"]) {
                     this.animation = "attack1";
@@ -277,10 +283,10 @@ function set_canvas_size() {
     c.width = width
     c.height = height
     c.style.bottom = "0"
-    let a = -(width - window.innerWidth)/2
-    let b = -(height - window.innerHeight)/2
-    c.style.left =a+"px";
-    c.style.bottom =b+"px";
+    let a = -(width - window.innerWidth) / 2
+    let b = -(height - window.innerHeight) / 2
+    c.style.left = a + "px";
+    c.style.bottom = b + "px";
 }
 
 var keyboard_map = {};
@@ -399,7 +405,7 @@ function gravitation_pull(for_what) {
                     el.falling_velocity += gravitation / 100;
                     el.y += el.falling_velocity;
                 } else if (el.falling) {
-                    el.falling = false 
+                    el.falling = false
                     el.falling_velocity = 0;
                     el.y = Math.ceil(el.row * (height / 14) - el.size)
                     clearInterval(interval)
