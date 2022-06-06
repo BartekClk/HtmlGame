@@ -1,0 +1,40 @@
+* {
+    font-family: Calibri;
+}
+
+#down_screen_gui {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translate(-50%);
+    width: fit-content;
+    height: fit-content;
+}
+
+#exp_bar {
+    width: 600px;
+    bottom: inherit;
+}
+
+#exp_background {
+    width: inherit;
+    position: absolute;
+    bottom: inherit;
+}
+
+#exp_bar_full {
+    width: inherit;
+    position: absolute;
+    bottom: inherit;
+    clip: rect(0px, 0px, 25px, 0px);
+}
+
+#exp_level {
+    position: absolute;
+    bottom: inherit;
+    font-size: 32px;
+    transform: translate(-50%, 25%);
+    color: white;
+    text-shadow: 2px 2px 2px black;
+    left: 300px;
+}

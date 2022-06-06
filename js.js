@@ -128,8 +128,13 @@ class Player {
         this.falling_velocity = 0;
         this.climb = false
         this.can_climb = false;
-        this.hp = 100;
-        this.exp = 0;
+        this.hp = 10;
+        this.exp = 22220;
+        this.lvl = 0;
+        this.exp_bar = document.querySelector("#exp_bar");
+        this.exp_bar.style.width = 600 + "px";
+        this.exp_bar_full = document.querySelector("#exp_bar_full");
+        this.exp_bar_level = document.querySelector("#exp_level");
         this.skins = {
             "attack1": "timberman/attack1.png",
             "attack2": "timberman/attack2.png",
@@ -275,9 +280,21 @@ class Player {
         this.y = y - this.size / 2;
         this.x = x - this.size / 2;
     }
+    setlevel() {
+        let size = parseInt(this.exp_bar.style.width.slice(0, -2));
+        this.exp_bar_full.style = "clip:rect(0px, " + (size * ((this.exp % 100) / 100)) + "px, 25px, 0px);"
+        if (this.exp >= 100) {
+            this.lvl = Math.floor(this.exp / 100);
+            this.exp = this.exp % 100;
+        }
+        if (this.lvl > 0) {
+            this.exp_bar_level.innerHTML = this.lvl;
+        }
+    }
 }
 
 var player = new Player();
+player.setlevel()
 
 function set_canvas_size() {
     c.width = width
