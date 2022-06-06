@@ -110,7 +110,7 @@ c.style.position = "fixed"
 class Player {
     constructor() {
         this.size = 192;
-        this.movement_speed = 10;
+        this.movement_speed = 3;
         this.moving_speed = 2;
         this.jump_height = 20;
         this.gravitation_work = true;
