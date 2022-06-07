@@ -129,12 +129,14 @@ class Player {
         this.climb = false
         this.can_climb = false;
         this.hp = 10;
-        this.exp = 22220;
+        this.exp = 0;
         this.lvl = 0;
         this.exp_bar = document.querySelector("#exp_bar");
         this.exp_bar.style.width = 600 + "px";
         this.exp_bar_full = document.querySelector("#exp_bar_full");
         this.exp_bar_level = document.querySelector("#exp_level");
+        this.health_bar = document.querySelector("#health_grid");
+        this.fall_damage = true;
         this.skins = {
             "attack1": "timberman/attack1.png",
             "attack2": "timberman/attack2.png",
@@ -207,24 +209,24 @@ class Player {
                     }
                     this.x += this.moving_speed * 1.5;
                     break;
-                case "climb":
-                    this.y -= this.movement_speed * 1.5;
-                    break;
             }
             let climb_under;
             try {
-                let foot1 = blocks[map2[Math.floor((this.y + this.size + 15) / (height / 14))][Math.floor((this.x + this.foot[0] + 15) / (width / 24))]]["can_climb"];
-                let foot2 = blocks[map2[Math.floor((this.y + this.size + 15) / (height / 14))][Math.floor((this.x + this.foot[1] - 15) / (width / 24))]]["can_climb"];
+                let foot1 = blocks[map2[Math.floor((this.y + this.size + 5) / (height / 14))][Math.floor((this.x + this.foot[0] + 15) / (width / 24))]]["can_climb"];
+                let foot2 = blocks[map2[Math.floor((this.y + this.size + 5) / (height / 14))][Math.floor((this.x + this.foot[1] - 15) / (width / 24))]]["can_climb"];
                 climb_under = foot1 || foot2;
-                foot1 = blocks[map2[Math.floor((this.y + this.size - 5) / (height / 14))][Math.floor((this.x + this.foot[0] + 15) / (width / 24))]]["can_climb"];
-                foot2 = blocks[map2[Math.floor((this.y + this.size - 5) / (height / 14))][Math.floor((this.x + this.foot[1] - 15) / (width / 24))]]["can_climb"];
-                climb_under = foot1 || foot2 || climb_under;
             } catch {}
-            if (climb_under) this.gravitation_work = false;
-            else this.gravitation_work = true;
+            if (climb_under) {
+                this.gravitation_work = false;
+                this.fall_damage = false;
+            } else {
+                this.gravitation_work = true;
+                setTimeout(() => {
+                    this.fall_damage = true;
+                }, 10)
+            }
 
             if (this.animation == false) {
-
                 if (keyboard_map["Space"] && !this.falling) {
                     this.animation = "jump";
                     player_moves["animation_six"] = 0;
@@ -252,18 +254,17 @@ class Player {
                     else this.move = "walk"
                 }
                 if (keyboard_map["KeyW"]) {
-                    this.climb = "up";
-                    let foot1 = blocks[map2[Math.floor((this.y + this.size - 10) / (height / 14))][Math.floor((this.x + this.foot[0] + 15) / (width / 24))]]["can_climb"];
-                    let foot2 = blocks[map2[Math.floor((this.y + this.size - 10) / (height / 14))][Math.floor((this.x + this.foot[1] - 15) / (width / 24))]]["can_climb"];
-                    if (foot1 && foot2) {
+                    let foot1 = blocks[map2[Math.floor((this.y + this.size - 1) / (height / 14))][Math.floor((this.x + this.foot[0] + 15) / (width / 24))]]["can_climb"];
+                    let foot2 = blocks[map2[Math.floor((this.y + this.size - 1) / (height / 14))][Math.floor((this.x + this.foot[1] - 15) / (width / 24))]]["can_climb"];
+                    if ((foot1 && foot2)) {
                         this.move = false;
                         this.climb = true;
-                        this.animation = "climb";
+                        this.move = "climb";
                         this.gravitation_work = false;
+                        this.y -= this.movement_speed;
                     } else {
-                        this.animation = false;
+                        if (this.move == "climb") this.move = false;
                         this.climb = false;
-                        this.gravitation_work = true;
                     }
                 }
                 if (keyboard_map["KeyS"]) {
@@ -280,7 +281,7 @@ class Player {
         this.y = y - this.size / 2;
         this.x = x - this.size / 2;
     }
-    setlevel() {
+    setLevel() {
         let size = parseInt(this.exp_bar.style.width.slice(0, -2));
         this.exp_bar_full.style = "clip:rect(0px, " + (size * ((this.exp % 100) / 100)) + "px, 25px, 0px);"
         if (this.exp >= 100) {
@@ -291,10 +292,29 @@ class Player {
             this.exp_bar_level.innerHTML = this.lvl;
         }
     }
+    setHealth() {
+        let hearts = this.health_bar.children;
+        for (let i = 0; i < hearts.length; i++) {
+            if (i <= this.hp / 2 - 1) {
+                hearts[i].src = "./images/gui/full_heart.png";
+            } else if (i == Math.ceil(this.hp / 2 - 1)) {
+                hearts[i].src = "./images/gui/half_heart.png";
+            } else {
+                hearts[i].src = "./images/gui/heart_background.png";
+            }
+        }
+    }
+    getDamage(howMuch) {
+        this.animation = "hurt";
+        player_moves["hurt"] == 0;
+        this.hp -= howMuch;
+        this.setHealth();
+    }
 }
 
 var player = new Player();
-player.setlevel()
+player.setLevel()
+player.setHealth()
 
 function set_canvas_size() {
     c.width = width
@@ -324,7 +344,8 @@ var player_moves = {
     6: 0,
     4: 0,
     3: 0,
-    "animation_six": 0
+    "animation_six": 0,
+    "hurt": 0
 }
 
 var animation_counter = 0;
@@ -353,9 +374,11 @@ function play_animation(witch) {
             }
             break;
         case "climb":
-            ctx.drawImage(player.skins['climb'], 192 * player_moves["animation_six"], 0, 192, 192, player.x, player.y, player.size, player.size)
-            if (animation_counter >= 6) {
-                animation_counter = 0;
+            break;
+        case "hurt":
+            ctx.drawImage(player.skins['hurt'], 192 * player_moves["hurt"], 0, 192, 192, player.x, player.y, player.size, player.size)
+            if (player_moves["hurt"] >= 2) {
+                player_moves["hurt"] = 0;
                 player.animation = false;
             }
             break;
@@ -413,6 +436,7 @@ function player_draw() {
     } else if (!player.jump) {
         if (player.move == "run") ctx.drawImage(player.skins['run'], 192 * player_moves[6], 0, 192, 192, player.x, player.y, player.size, player.size);
         else if (player.move == "walk") ctx.drawImage(player.skins['walk'], 192 * player_moves[6], 0, 192, 192, player.x, player.y, player.size, player.size);
+        else if (player.move == "climb") ctx.drawImage(player.skins['climb'], 192 * player_moves[6], 0, 192, 192, player.x, player.y, player.size, player.size)
     }
     ctx.restore()
 }
@@ -434,6 +458,9 @@ function gravitation_pull(for_what) {
                     el.falling_velocity += gravitation / 100;
                     el.y += el.falling_velocity;
                 } else if (el.falling) {
+                    if (el.falling_velocity > 20 && el.fall_damage) {
+                        el.getDamage(Math.floor((el.falling_velocity - 20) / 10))
+                    }
                     el.falling = false
                     el.falling_velocity = 0;
                     el.y = Math.ceil(el.row * (height / 14) - el.size)
@@ -515,3 +542,7 @@ setInterval(() => {
     player_moves["animation_six"]++;
     if (player_moves["animation_six"] == 6) player_moves["animation_six"] = 0;
 }, 1000 / (12 * animation_speed))
+setInterval(() => {
+    player_moves["hurt"]++;
+    if (player_moves["hurt"] == 3) player_moves["hurt"] = 0;
+}, 100)
