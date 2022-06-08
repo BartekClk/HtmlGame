@@ -121,6 +121,7 @@ class Player {
         this.movement_speed = 3;
         this.moving_speed = 2;
         this.jump_height = 20;
+        this.attack_damage = 1;
         this.gravitation_work = true;
         this.foot = [this.size / 6, this.size / 7 * 3];
         this.y = 600;
@@ -145,6 +146,7 @@ class Player {
         this.exp_bar_level = document.querySelector("#exp_level");
         this.health_bar = document.querySelector("#health_grid");
         this.fall_damage = true;
+        this.ennemies = []
         this.skins = {
             "attack1": "timberman/attack1.png",
             "attack2": "timberman/attack2.png",
@@ -167,119 +169,161 @@ class Player {
         }
 
         setInterval(() => {
-            switch (this.animation) {
-                case false:
-                    switch (this.move) {
-                        case "walk":
-                            this.moving_speed = this.movement_speed;
-                            check_border([this])
-                            break;
-                        case "run":
-                            this.moving_speed = this.movement_speed * 2;
-                            check_border([this])
-                            break;
-                        case false:
-                            this.moving_speed = 0;
-                            break;
+            if (this.hp > 0) {
+                switch (this.animation) {
+                    case false:
+                        switch (this.move) {
+                            case "walk":
+                                this.moving_speed = this.movement_speed;
+                                check_border([this])
+                                break;
+                            case "run":
+                                this.moving_speed = this.movement_speed * 2;
+                                check_border([this])
+                                break;
+                            case false:
+                                this.moving_speed = 0;
+                                break;
 
-                    }
-                    switch (this.direction) {
-                        case "right":
-                            this.moving_speed = Math.abs(this.moving_speed);
-                            check_border([this])
-                            break;
-                        case "left":
-                            this.moving_speed = Math.abs(this.moving_speed);
-                            this.moving_speed = parseInt('-' + String(this.moving_speed));
-                            check_border([this])
-                            break;
-                    }
-                    this.x += this.moving_speed;
-                    break;
-                case "jump":
-                    if (this.move != "jump") {
-                        this.move = "jump"
-                        setTimeout(() => {
-                            check_border([this])
-                            let i = 0;
-                            let jump_interval = setInterval(() => {
-                                let solid = blocks[map[Math.floor((this.y + this.size + 1) / (block_height))][Math.floor((this.x + this.foot[0] + 15) / (block_width))]]["solid"];
-                                if (i > 10 && i < 30) this.y -= this.jump_height / 20;
-                                if (i > 30 && i < 40 && !solid) {
-                                    this.y += this.jump_height / 10;
-                                }
-                                if (i >= 50) {
-                                    clearInterval(jump_interval);
-                                    i = 0;
-                                } else i++
-                            }, 10)
-                        }, 0)
-                    }
-                    this.x += this.moving_speed * 1.5;
-                    break;
-            }
-            let climb_under;
-            try {
-                let foot1 = blocks[map2[Math.floor((this.y + this.size + 5) / (block_height))][Math.floor((this.x + this.foot[0] + 15) / (block_width))]]["can_climb"];
-                let foot2 = blocks[map2[Math.floor((this.y + this.size + 5) / (block_height))][Math.floor((this.x + this.foot[1] - 15) / (block_width))]]["can_climb"];
-                climb_under = foot1 || foot2;
-            } catch {}
-            if (climb_under) {
-                this.gravitation_work = false;
-                this.fall_damage = false;
-            } else {
-                this.gravitation_work = true;
-                setTimeout(() => {
-                    this.fall_damage = true;
-                }, 10)
-            }
-
-            if (this.animation == false) {
-                if (keyboard_map["Space"] && !this.falling) {
-                    this.animation = "jump";
-                    player_moves["animation_six"] = 0;
+                        }
+                        switch (this.direction) {
+                            case "right":
+                                this.moving_speed = Math.abs(this.moving_speed);
+                                check_border([this])
+                                break;
+                            case "left":
+                                this.moving_speed = Math.abs(this.moving_speed);
+                                this.moving_speed = parseInt('-' + String(this.moving_speed));
+                                check_border([this])
+                                break;
+                        }
+                        this.x += this.moving_speed;
+                        break;
+                    case "jump":
+                        if (this.move != "jump") {
+                            this.move = "jump"
+                            setTimeout(() => {
+                                check_border([this])
+                                let i = 0;
+                                let jump_interval = setInterval(() => {
+                                    let solid = blocks[map[Math.floor((this.y + this.size + 1) / (block_height))][Math.floor((this.x + this.foot[0] + 15) / (block_width))]]["solid"];
+                                    if (i > 10 && i < 30) this.y -= this.jump_height / 20;
+                                    if (i > 30 && i < 40 && !solid) {
+                                        this.y += this.jump_height / 10;
+                                    }
+                                    if (i >= 50) {
+                                        clearInterval(jump_interval);
+                                        i = 0;
+                                    } else i++
+                                }, 10)
+                            }, 0)
+                        }
+                        this.x += this.moving_speed * 1.5;
+                        break;
                 }
-                if (keyboard_map["0"]) {
-                    this.animation = "attack1";
-                    player_moves["animation_six"] = 0;
-                    animation_counter = 0;
-                    keyboard_map["0"] = false
-                }
-                if (keyboard_map["2"]) {
-                    this.animation = "attack2";
-                    player_moves["animation_six"] = 0;
-                    animation_counter = 0;
-                    keyboard_map["2"] = false
-                }
-                if (keyboard_map["KeyD"]) {
-                    this.direction = "right";
-                    if (keyboard_map["ShiftLeft"]) this.move = "run"
-                    else this.move = "walk"
-                }
-                if (keyboard_map["KeyA"]) {
-                    this.direction = "left";
-                    if (keyboard_map["ShiftLeft"]) this.move = "run"
-                    else this.move = "walk"
-                }
-                if (keyboard_map["KeyW"]) {
-                    let foot1 = blocks[map2[Math.floor((this.y + this.size - 1) / (block_height))][Math.floor((this.x + this.foot[0] + 15) / (block_width))]]["can_climb"];
-                    let foot2 = blocks[map2[Math.floor((this.y + this.size - 1) / (block_height))][Math.floor((this.x + this.foot[1] - 15) / (block_width))]]["can_climb"];
-                    if ((foot1 && foot2)) {
-                        this.move = false;
-                        this.climb = true;
-                        this.move = "climb";
-                        this.gravitation_work = false;
-                        this.y -= this.movement_speed;
-                    } else {
-                        if (this.move == "climb") this.move = false;
-                        this.climb = false;
-                    }
-                }
-                if (keyboard_map["KeyS"]) {
+                let climb_under;
+                try {
+                    let foot1 = blocks[map2[Math.floor((this.y + this.size + 5) / (block_height))][Math.floor((this.x + this.foot[0] + 15) / (block_width))]]["can_climb"];
+                    let foot2 = blocks[map2[Math.floor((this.y + this.size + 5) / (block_height))][Math.floor((this.x + this.foot[1] - 15) / (block_width))]]["can_climb"];
+                    climb_under = foot1 || foot2;
+                } catch {}
+                if (climb_under) {
+                    this.gravitation_work = false;
+                    this.fall_damage = false;
+                } else {
                     this.gravitation_work = true;
+                    setTimeout(() => {
+                        this.fall_damage = true;
+                    }, 10)
                 }
-                if (!keyboard_map["Space"] && !keyboard_map["0"] && !keyboard_map["2"] && !keyboard_map["KeyD"] && !keyboard_map["KeyA"] && !keyboard_map["KeyW"]) {
-                    this.move = false;
+
+                if (this.animation == false) {
+                    if (keyboard_map["Space"] && !this.falling) {
+                        this.animation = "jump";
+                        player_moves["animation_six"] = 0;
+                    }
+                    if (keyboard_map["0"]) {
+                        this.animation = "attack1";
+                        player_moves["animation_six"] = 0;
+                        animation_counter = 0;
+                        keyboard_map["0"] = false
+                        this.ennemies.forEach((item) => {
+                            if (this.direction == "right") {
+                                if ((this.row == item.row && (this.column[1] + 1 == item.column[0] || this.column[1] + 1 == item.column[1])) && item.hp > 0) {
+                                    item.getDamage(this.attack_damage);
+                                    if (item.hp == 0) {
+                                        item.animation = "dead";
+                                        this.addExp(item.exp);
+                                    }
+                                }
+                            } else if (this.direction == "left") {
+                                if ((this.row == item.row && (this.column[0] - 1 == item.column[0] || this.column[0] - 1 == item.column[1])) && item.hp > 0) {
+                                    item.getDamage(this.attack_damage);
+                                    if (item.hp == 0) {
+                                        item.animation = "dead";
+                                        this.addExp(item.exp);
+                                    }
+                                }
+                            }
+
+                        })
+                    }
+                    if (keyboard_map["2"]) {
+                        this.animation = "attack2";
+                        player_moves["animation_six"] = 0;
+                        animation_counter = 0;
+                        keyboard_map["2"] = false
+                        this.ennemies.forEach((item) => {
+                            if (this.direction == "right") {
+                                if ((this.row == item.row && (this.column[1] + 1 == item.column[0] || this.column[1] + 1 == item.column[1])) && item.hp > 0) {
+                                    item.getDamage(this.attack_damage);
+                                    if (item.hp == 0) {
+                                        item.animation = "dead";
+                                        this.addExp(item.exp);
+                                    }
+                                }
+                            } else if (this.direction == "left") {
+                                if ((this.row == item.row && (this.column[0] - 1 == item.column[0] || this.column[0] - 1 == item.column[1])) && item.hp > 0) {
+                                    item.getDamage(this.attack_damage);
+                                    if (item.hp == 0) {
+                                        item.animation = "dead";
+                                        this.addExp(item.exp);
+                                    }
+                                }
+                            }
+
+                        })
+                    }
+                    if (keyboard_map["KeyD"]) {
+                        this.direction = "right";
+                        if (keyboard_map["ShiftLeft"]) this.move = "run"
+                        else this.move = "walk"
+                    }
+                    if (keyboard_map["KeyA"]) {
+                        this.direction = "left";
+                        if (keyboard_map["ShiftLeft"]) this.move = "run"
+                        else this.move = "walk"
+                    }
+                    if (keyboard_map["KeyW"]) {
+                        let foot1 = blocks[map2[Math.floor((this.y + this.size - 1) / (block_height))][Math.floor((this.x + this.foot[0] + 15) / (block_width))]]["can_climb"];
+                        let foot2 = blocks[map2[Math.floor((this.y + this.size - 1) / (block_height))][Math.floor((this.x + this.foot[1] - 15) / (block_width))]]["can_climb"];
+                        if ((foot1 && foot2)) {
+                            this.move = false;
+                            this.climb = true;
+                            this.move = "climb";
+                            this.gravitation_work = false;
+                            this.y -= this.movement_speed;
+                        } else {
+                            if (this.move == "climb") this.move = false;
+                            this.climb = false;
+                        }
+                    }
+                    if (keyboard_map["KeyS"]) {
+                        this.gravitation_work = true;
+                    }
+                    if (!keyboard_map["Space"] && !keyboard_map["0"] && !keyboard_map["2"] && !keyboard_map["KeyD"] && !keyboard_map["KeyA"] && !keyboard_map["KeyW"]) {
+                        this.move = false;
+                    }
                 }
             }
         }, 10)
@@ -318,11 +362,191 @@ class Player {
         this.hp -= howMuch;
         this.setHealth();
     }
+    addExp(howMuch) {
+        this.exp += howMuch;
+        this.setLevel();
+    }
+    draw() {
+        ctx.save()
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 5;
+        this.rotate(this.direction);
+        if (!this.move && !this.animation && this.hp > 0) ctx.drawImage(this.skins['idle'], 192 * player_moves[4], 0, 192, 192, this.x, this.y, this.size, this.size);
+        if (this.animation) {
+            play_animation(this.animation, this)
+        } else if (!this.jump && this.hp > 0) {
+            if (this.move == "run") ctx.drawImage(this.skins['run'], 192 * player_moves[6], 0, 192, 192, this.x, this.y, this.size, this.size);
+            else if (this.move == "walk") ctx.drawImage(this.skins['walk'], 192 * player_moves[6], 0, 192, 192, this.x, this.y, this.size, this.size);
+            else if (this.move == "climb") ctx.drawImage(this.skins['climb'], 192 * player_moves[6], 0, 192, 192, this.x, this.y, this.size, this.size)
+        } else {
+            ctx.drawImage(this.skins['death'], 192 * 5, 0, 192, 192, this.x, this.y, this.size, this.size);
+        }
+        ctx.restore()
+    }
+    rotate(direction) {
+        if (direction == "left") {
+            ctx.translate(this.size + this.x * 2 - this.size / 3, 0);
+            ctx.scale(-1, 1);
+        } else if (direction == "right") {
+            ctx.translate(0, 0);
+            ctx.scale(1, 1);
+        }
+    }
+}
+
+class Swordsman {
+    constructor() {
+        this.size = 192;
+        this.movement_speed = 2.5;
+        this.moving_speed = 2;
+        this.jump_height = 20;
+        this.gravitation_work = true;
+        this.foot = [this.size / 6, this.size / 7 * 3];
+        this.y = 0;
+        this.x = 1500;
+        this.row = Math.floor((this.y + this.size) / (block_height));
+        this.column = Math.floor(this.x / (block_width));
+        this.name = 'swordsman';
+        this.move = false;
+        this.moving = false;
+        this.direction = "right";
+        this.animation = false;
+        this.falling = false;
+        this.falling_velocity = 0;
+        this.climb = false
+        this.can_climb = false;
+        this.hp = 5;
+        this.exp = this.hp * 2;
+        this.fall_damage = true;
+        this.attack_speed = 0.5;
+        this.attack = false;
+        this.attack_damage = 1;
+        this.skins = {
+            "attack1": "swordsman/attack1.png",
+            "attack2": "swordsman/attack2.png",
+            "attack3": "swordsman/attack3.png",
+            "climb": "swordsman/climb.png",
+            "craft": "swordsman/craft.png",
+            "death": "swordsman/death.png",
+            "hurt": "swordsman/hurt.png",
+            "icon": "swordsman/icon.png",
+            "idle": "swordsman/idle.png",
+            "jump": "swordsman/jump.png",
+            "push": "swordsman/push.png",
+            "run": "swordsman/run.png",
+            "walk": "swordsman/walk.png",
+            "heart": "gui/full_heart.png"
+        }
+        for (var el in this.skins) {
+            let skin = this.skins[el]
+            skin = new Image();
+            skin.src = "images/" + this.skins[el]
+            this.skins[el] = skin;
+        }
+        let swordsman_interval = setInterval(() => {
+
+            let climb_under;
+            try {
+                let foot1 = blocks[map2[Math.floor((this.y + this.size + 5) / (block_height))][Math.floor((this.x + this.foot[0] + 15) / (block_width))]]["can_climb"];
+                let foot2 = blocks[map2[Math.floor((this.y + this.size + 5) / (block_height))][Math.floor((this.x + this.foot[1] - 15) / (block_width))]]["can_climb"];
+                climb_under = foot1 || foot2;
+            } catch {}
+            if (climb_under) {
+                this.gravitation_work = false;
+                this.fall_damage = false;
+            } else {
+                this.gravitation_work = true;
+                setTimeout(() => {
+                    this.fall_damage = true;
+                }, 10)
+            }
+
+            if (this.hp <= 0) clearInterval(swordsman_interval);
+            if (this.row == player.row && player.hp > 0) {
+                var this_collumn = (this.column[0] + this.column[1]) / 2;
+                var player_collumn = (player.column[0] + player.column[1]) / 2;
+                if (this_collumn - 1 > player_collumn) {
+                    this.move = "run";
+                    this.direction = "left";
+                    this.x -= this.movement_speed * 2;
+                } else if (this_collumn + 1 < player_collumn) {
+                    this.move = "run";
+                    this.direction = "right";
+                    this.x += this.movement_speed * 2;
+                } else if (this_collumn - 1 < player_collumn || this_collumn + 1 > player_collumn) {
+                    this.move = false;
+                    if (this.attack == false) {
+                        this.attack = true;
+                        this.animation = "attack1";
+                        player.getDamage(this.attack_damage);
+                        if (player.hp == 0) {
+                            player.animation = "dead";
+                        }
+                        setTimeout(() => {
+                            this.attack = false;
+                        }, 1000 / this.attack_speed)
+                    }
+
+                } else {
+                    this.move = false;
+                }
+            } else {
+                this.move = false;
+            }
+        }, 10)
+    }
+    setposition(x, y) {
+        this.y = y - this.size / 2;
+        this.x = x - this.size / 2;
+    }
+    getDamage(howMuch) {
+        this.animation = "hurt";
+        player_moves["hurt"] == 0;
+        this.hp -= howMuch;
+    }
+    draw() {
+        ctx.save()
+        if (this.hp > 0) {
+            ctx.fillStyle = "White"
+            ctx.font = "20px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(this.hp, this.x + this.size / 3 - 15, this.y + 50);
+            ctx.drawImage(this.skins['heart'], 0, 0, 192, 192, this.x + this.size / 3, this.y + 34, 20, 20);
+        }
+        ctx.restore()
+        ctx.save()
+        ctx.shadowColor = "black";
+        ctx.shadowBlur = 5;
+        this.rotate(this.direction);
+        if (!this.move && !this.animation && this.hp > 0) ctx.drawImage(this.skins['idle'], 192 * player_moves[4], 0, 192, 192, this.x, this.y, this.size, this.size);
+        if (this.animation) {
+            play_animation(this.animation, this)
+        } else if (!this.jump && this.hp > 0) {
+            if (this.move == "run") ctx.drawImage(this.skins['run'], 192 * player_moves[6], 0, 192, 192, this.x, this.y, this.size, this.size);
+            else if (this.move == "walk") ctx.drawImage(this.skins['walk'], 192 * player_moves[6], 0, 192, 192, this.x, this.y, this.size, this.size);
+            else if (this.move == "climb") ctx.drawImage(this.skins['climb'], 192 * player_moves[6], 0, 192, 192, this.x, this.y, this.size, this.size)
+        } else {
+            ctx.drawImage(this.skins['death'], 192 * 5, 0, 192, 192, this.x, this.y, this.size, this.size);
+        }
+        ctx.restore()
+    }
+    rotate(direction) {
+        if (direction == "left") {
+            ctx.translate(this.size + this.x * 2 - this.size / 3, 0);
+            ctx.scale(-1, 1);
+        } else if (direction == "right") {
+            ctx.translate(0, 0);
+            ctx.scale(1, 1);
+        }
+    }
 }
 
 var player = new Player();
 player.setLevel()
 player.setHealth()
+
+var ennemy = new Swordsman();
+player.ennemies.push(ennemy);
 
 function set_canvas_size() {
     c.width = map[0].length * (block_width)
@@ -361,48 +585,43 @@ var player_moves = {
 
 var animation_counter = 0;
 
-function play_animation(witch) {
+function play_animation(witch, entity) {
     switch (witch) {
         case "jump":
-            ctx.drawImage(player.skins['jump'], 192 * player_moves["animation_six"], 0, 192, 192, player.x, player.y, player.size, player.size)
+            ctx.drawImage(entity.skins['jump'], 192 * player_moves["animation_six"], 0, 192, 192, entity.x, entity.y, entity.size, entity.size)
             if (animation_counter >= 6) {
                 animation_counter = 0;
-                player.animation = false;
+                entity.animation = false;
             }
             break;
         case "attack1":
-            ctx.drawImage(player.skins['attack1'], 192 * player_moves["animation_six"], 0, 192, 192, player.x, player.y, player.size, player.size)
+            ctx.drawImage(entity.skins['attack1'], 192 * player_moves["animation_six"], 0, 192, 192, entity.x, entity.y, entity.size, entity.size)
             if (animation_counter >= 6) {
                 animation_counter = 0;
-                player.animation = false;
+                entity.animation = false;
             }
             break;
         case "attack2":
-            ctx.drawImage(player.skins['attack2'], 192 * player_moves["animation_six"], 0, 192, 192, player.x, player.y, player.size, player.size)
+            ctx.drawImage(entity.skins['attack2'], 192 * player_moves["animation_six"], 0, 192, 192, entity.x, entity.y, entity.size, entity.size)
             if (animation_counter >= 6) {
                 animation_counter = 0;
-                player.animation = false;
+                entity.animation = false;
             }
-            break;
-        case "climb":
             break;
         case "hurt":
-            ctx.drawImage(player.skins['hurt'], 192 * player_moves["hurt"], 0, 192, 192, player.x, player.y, player.size, player.size)
+            ctx.drawImage(entity.skins['hurt'], 192 * player_moves["hurt"], 0, 192, 192, entity.x, entity.y, entity.size, entity.size)
             if (player_moves["hurt"] >= 2) {
                 player_moves["hurt"] = 0;
-                player.animation = false;
+                entity.animation = false;
             }
             break;
-    }
-}
-
-function player_rotate(direction) {
-    if (direction == "left") {
-        ctx.translate(player.size + player.x * 2 - player.size / 3, 0);
-        ctx.scale(-1, 1);
-    } else if (direction == "right") {
-        ctx.translate(0, 0);
-        ctx.scale(1, 1);
+        case "dead":
+            ctx.drawImage(entity.skins['death'], 192 * player_moves["animation_six"], 0, 192, 192, entity.x, entity.y, entity.size, entity.size)
+            if (animation_counter >= 6) {
+                animation_counter = 0;
+                entity.animation = false;
+            }
+            break;
     }
 }
 
@@ -435,23 +654,6 @@ function draw_block(from, name, opacity = 1) {
     ctx.restore()
 }
 
-
-function player_draw() {
-    ctx.save()
-    ctx.shadowColor = "black";
-    ctx.shadowBlur = 5;
-    player_rotate(player.direction);
-    if (!player.move && !player.animation) ctx.drawImage(player.skins['idle'], 192 * player_moves[4], 0, 192, 192, player.x, player.y, player.size, player.size);
-    if (player.animation) {
-        play_animation(player.animation)
-    } else if (!player.jump) {
-        if (player.move == "run") ctx.drawImage(player.skins['run'], 192 * player_moves[6], 0, 192, 192, player.x, player.y, player.size, player.size);
-        else if (player.move == "walk") ctx.drawImage(player.skins['walk'], 192 * player_moves[6], 0, 192, 192, player.x, player.y, player.size, player.size);
-        else if (player.move == "climb") ctx.drawImage(player.skins['climb'], 192 * player_moves[6], 0, 192, 192, player.x, player.y, player.size, player.size)
-    }
-    ctx.restore()
-}
-
 let iteration = 0;
 
 function gravitation_pull(for_what) {
@@ -469,7 +671,7 @@ function gravitation_pull(for_what) {
                     el.falling_velocity += gravitation / 100;
                     el.y += el.falling_velocity;
                 } else if (el.falling) {
-                    if (el.falling_velocity > 20 && el.fall_damage) {
+                    if (el.fall_damage && Math.floor((el.falling_velocity - 20) / 10) > 0) {
                         el.getDamage(Math.floor((el.falling_velocity - 20) / 10))
                     }
                     el.falling = false
@@ -508,31 +710,59 @@ function check_block_colision(for_what) {
     }
 }
 
-setInterval(() => {
-    set_canvas_size();
+var gui = document.querySelector("#in_game_overlay");
+gui.style.display = "none";
 
-    draw_block(map_background, "map_background", 0.6);
-    draw_block(map2, "map2");
+var game_over = document.querySelector("#game_over");
+game_over.style.display = "none";
 
-    check_border([player])
+var start_game = document.querySelector("#reset_level");
+start_game.addEventListener('click', () => {
+    if (player.hp <= 0) location.href = "./index.html";
+    start();
+})
 
-    player_draw();
-    draw_block(map_before_player, "map_before_player");
-    draw_block(map, "map");
+function start(game_stop) {
+    gui.style.display = "block";
+    game_over.style.display = "none";
+    var game_interval = setInterval(() => {
+        set_canvas_size();
 
-    gravitation_pull([player]);
+        draw_block(map_background, "map_background", 0.6);
+        draw_block(map2, "map2");
 
-    onkeydown = onkeyup = function(e) {
-        e = e || event;
-        keyboard_map[e.code] = e.type == 'keydown';
-    }
-    onmousedown = function(e) {
-        e.preventDefault()
-        e = e || event
-        keyboard_map[e.button] = e.isTrusted;
-    }
-    oncontextmenu = e => e.preventDefault();
-}, 1000 / fps)
+        check_border([player])
+
+        ennemy.draw()
+
+        player.draw();
+        draw_block(map_before_player, "map_before_player");
+        draw_block(map, "map");
+
+        gravitation_pull([player]);
+        gravitation_pull([ennemy]);
+
+        onkeydown = onkeyup = function(e) {
+            e = e || event;
+            keyboard_map[e.code] = e.type == 'keydown';
+        }
+        onmousedown = function(e) {
+            e = e || event
+            keyboard_map[e.button] = e.isTrusted;
+        }
+        oncontextmenu = e => e.preventDefault();
+        if (game_stop || player.hp <= 0) {
+            // gui.style.display = "none";
+            game_over.style.display = "block";
+            setTimeout(() => {
+                clearInterval(game_interval);
+            }, 1000)
+        }
+    }, 1000 / fps)
+}
+
+start(true)
+
 
 setInterval(() => {
     player_moves[6]++;
